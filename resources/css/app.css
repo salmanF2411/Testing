@@ -1,0 +1,49 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+:root {
+    --brand-navy: #062f5f;
+    --brand-blue: #0f5fb8;
+    --brand-sky: #38bdf8;
+    --brand-green: #39d98a;
+    --brand-gold: #ffd23f;
+}
+
+.brand-page-bg {
+    background:
+        radial-gradient(circle at top right, rgba(56, 189, 248, 0.16), transparent 32%),
+        linear-gradient(135deg, rgba(6, 47, 95, 0.05), rgba(15, 95, 184, 0.04) 52%, rgba(56, 189, 248, 0.08)),
+        #f8fafc;
+}
+
+.brand-logo-frame {
+    background: #ffffff;
+    border: 1px solid rgba(6, 47, 95, 0.14);
+    box-shadow: 0 10px 24px rgba(6, 47, 95, 0.12);
+}
+
+.brand-logo-image {
+    height: 100%;
+    width: 100%;
+    object-fit: contain;
+}
+
+.brand-heading {
+    background: linear-gradient(90deg, var(--brand-navy), var(--brand-blue));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
