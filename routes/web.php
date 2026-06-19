@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StockController;
@@ -28,6 +29,14 @@ Route::middleware('auth')->group(function () {
 
     // Logout
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+    // Notifications
+    Route::get('/notifikasi', [NotificationController::class, 'index'])
+        ->name('notifikasi.index');
+    Route::post('/notifikasi/baca-semua', [NotificationController::class, 'readAll'])
+        ->name('notifikasi.read-all');
+    Route::post('/notifikasi/{notification}/baca', [NotificationController::class, 'read'])
+        ->name('notifikasi.read');
 
     // Products
     Route::get('/produk', [ProductController::class, 'index'])

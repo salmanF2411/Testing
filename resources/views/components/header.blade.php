@@ -29,9 +29,15 @@
             <div class="relative" x-data="{ notifOpen: false }">
                 <button
                     @click="notifOpen = !notifOpen"
+                    type="button"
+                    aria-label="Buka notifikasi"
                     class="relative p-2 text-[#062f5f] hover:bg-[#eef4fb] rounded-lg transition-colors cursor-pointer">
                     <i class="fa-solid fa-bell text-xl"></i>
-                    <span class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">{{ $notifCount }}</span>
+                    @if($notifCount > 0)
+                        <span class="absolute -top-1 -right-1 min-w-5 h-5 px-1 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
+                            {{ $notifCount > 99 ? '99+' : $notifCount }}
+                        </span>
+                    @endif
                 </button>
 
                 <div
@@ -40,44 +46,64 @@
                     x-transition
                     @click.outside="notifOpen = false"
                     class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-slate-200 z-50 max-h-96 overflow-y-auto">
-                    <div class="px-4 py-3 border-b border-slate-100 bg-gradient-to-r from-[#eef4fb] via-white to-[#e8f7ff] flex items-center gap-2">
-                        <i class="fa-solid fa-bell text-sm text-[#0f5fb8]"></i>
-                        <p class="font-semibold text-slate-800">Notifikasi</p>
+                    <div class="px-4 py-3 border-b border-slate-100 bg-gradient-to-r from-[#eef4fb] via-white to-[#e8f7ff] flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-bell text-sm text-[#0f5fb8]"></i>
+                            <p class="font-semibold text-slate-800">Notifikasi</p>
+                        </div>
+                        @if($notifCount > 0)
+                            <form method="POST" action="{{ route('notifikasi.read-all') }}">
+                                @csrf
+                                <button type="submit" class="text-[11px] font-semibold text-[#0f5fb8] hover:text-[#062f5f]">
+                                    Baca semua
+                                </button>
+                            </form>
+                        @endif
                     </div>
 
-                    <div class="px-4 py-3 border-b border-slate-100 hover:bg-slate-100 transition cursor-pointer">
-                        <div class="flex gap-3">
-                            <div class="w-2 h-2 bg-[#062f5f] rounded-full mt-1.5 flex-shrink-0"></div>
-                            <div class="flex-1">
-                                <p class="text-sm font-semibold text-slate-800">Stok Produk Terbatas</p>
-                                <p class="text-xs text-slate-600">Minyak goreng premium tinggal 5 unit</p>
-                                <p class="text-xs text-slate-400 mt-1">5 menit yang lalu</p>
-                            </div>
+                    @forelse($notifications as $notification)
+                        @php
+                            $activityType = data_get($notification->data, 'activity_type', 'default');
+                            $dotClass = match($activityType) {
+                                'transaction' => 'bg-blue-600',
+                                'low_stock' => 'bg-red-500',
+                                'product_created' => 'bg-emerald-500',
+                                'product_disabled' => 'bg-slate-500',
+                                'stock_updated' => 'bg-amber-500',
+                                'stock_transfer_created' => 'bg-cyan-500',
+                                'stock_transfer_confirmed' => 'bg-green-600',
+                                default => 'bg-[#0f5fb8]',
+                            };
+                        @endphp
+                        <form method="POST" action="{{ route('notifikasi.read', $notification->id) }}" class="border-b border-slate-100">
+                            @csrf
+                            <button type="submit" class="w-full px-4 py-3 text-left transition hover:bg-slate-50 {{ $notification->unread() ? 'bg-blue-50/50' : 'bg-white' }}">
+                                <div class="flex gap-3">
+                                    <div class="w-2 h-2 {{ $notification->unread() ? $dotClass : 'bg-slate-300' }} rounded-full mt-1.5 flex-shrink-0"></div>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="text-sm {{ $notification->unread() ? 'font-semibold' : 'font-medium' }} text-slate-800">
+                                            {{ data_get($notification->data, 'title', 'Notifikasi') }}
+                                        </p>
+                                        <p class="text-xs text-slate-600 mt-0.5 break-words">
+                                            {{ data_get($notification->data, 'message', '-') }}
+                                        </p>
+                                        <p class="text-xs text-slate-400 mt-1">
+                                            {{ $notification->created_at->locale('id')->diffForHumans() }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </button>
+                        </form>
+                    @empty
+                        <div class="px-5 py-8 text-center">
+                            <i class="fa-regular fa-bell-slash text-2xl text-slate-300"></i>
+                            <p class="text-sm font-medium text-slate-600 mt-2">Belum ada notifikasi</p>
+                            <p class="text-xs text-slate-400 mt-1">Aktivitas terbaru akan muncul di sini.</p>
                         </div>
-                    </div>
-                    <div class="px-4 py-3 border-b border-slate-100 hover:bg-slate-100 transition cursor-pointer">
-                        <div class="flex gap-3">
-                            <div class="w-2 h-2 bg-[#0f5fb8] rounded-full mt-1.5 flex-shrink-0"></div>
-                            <div class="flex-1">
-                                <p class="text-sm font-semibold text-slate-800">Transaksi Berhasil</p>
-                                <p class="text-xs text-slate-600">Transaksi Rp 150.000 berhasil diproses</p>
-                                <p class="text-xs text-slate-400 mt-1">15 menit yang lalu</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="px-4 py-3 border-b border-slate-100 hover:bg-slate-100 transition cursor-pointer">
-                        <div class="flex gap-3">
-                            <div class="w-2 h-2 bg-[#38bdf8] rounded-full mt-1.5 flex-shrink-0"></div>
-                            <div class="flex-1">
-                                <p class="text-sm font-semibold text-slate-800">Transaksi Berhasil</p>
-                                <p class="text-xs text-slate-600">Transaksi Rp 100.000 berhasil diproses</p>
-                                <p class="text-xs text-slate-400 mt-1">20 menit yang lalu</p>
-                            </div>
-                        </div>
-                    </div>
+                    @endforelse
 
                     <div class="px-4 py-2 border-t border-slate-100 bg-slate-50 text-center">
-                        <a href="#" class="text-xs text-[#062f5f] hover:text-[#0f5fb8] font-semibold">Lihat semua notifikasi &rarr;</a>
+                        <a href="{{ route('notifikasi.index') }}" class="text-xs text-[#062f5f] hover:text-[#0f5fb8] font-semibold">Lihat semua notifikasi &rarr;</a>
                     </div>
                 </div>
             </div>

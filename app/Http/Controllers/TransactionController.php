@@ -7,6 +7,7 @@ use App\Models\Stock;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\Transaction as SaleTransaction;
+use App\Services\ManagementNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -147,6 +148,39 @@ class TransactionController extends Controller
 
             return $transaction;
         });
+
+        $transaction->load('store');
+
+        app(ManagementNotificationService::class)->send(
+            [$storeId],
+            'transaction',
+            'Transaksi Berhasil',
+            'Transaksi '.$transaction->invoice_number.' senilai Rp '.number_format((float) $transaction->total, 0, ',', '.').' berhasil diproses di '.$transaction->store->name.'.',
+            route('laporan-transaksi', ['store_id' => $storeId], false),
+            $this->currentUser(),
+        );
+
+        $lowStocks = Stock::query()
+            ->with('product')
+            ->where('store_id', $storeId)
+            ->whereIn('product_id', $quantities->keys())
+            ->whereColumn('current_stock', '<=', 'minimum_stock')
+            ->get();
+
+        if ($lowStocks->isNotEmpty()) {
+            $stockDetails = $lowStocks
+                ->map(fn (Stock $stock) => $stock->product->name.' tersisa '.$stock->current_stock.' '.$stock->product->unit)
+                ->join(', ');
+
+            app(ManagementNotificationService::class)->send(
+                [$storeId],
+                'low_stock',
+                'Stok Produk Terbatas',
+                $stockDetails.' di '.$transaction->store->name.'.',
+                route('stok', ['store_id' => $storeId], false),
+                $this->currentUser(),
+            );
+        }
 
         return redirect()
             ->route('transaksi', ['store_id' => $storeId])

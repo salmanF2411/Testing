@@ -7,6 +7,7 @@ use App\Models\Stock;
 use App\Models\StockMovement;
 use App\Models\StockTransfer;
 use App\Models\Store;
+use App\Services\ManagementNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -115,7 +116,7 @@ class StockController extends Controller
             ]);
         }
 
-        DB::transaction(function () use ($validated, $fromStoreId, $toStoreId) {
+        $transfer = DB::transaction(function () use ($validated, $fromStoreId, $toStoreId) {
             $sourceStock = Stock::query()
                 ->where('store_id', $fromStoreId)
                 ->where('product_id', $validated['product_id'])
@@ -161,7 +162,20 @@ class StockController extends Controller
                 'reference_id' => $transfer->id,
                 'notes' => 'Pengiriman stok antar cabang',
             ]);
+
+            return $transfer;
         });
+
+        $transfer->load(['fromStore', 'toStore', 'product']);
+
+        app(ManagementNotificationService::class)->send(
+            [$fromStoreId, $toStoreId],
+            'stock_transfer_created',
+            'Pengiriman Stok Dibuat',
+            $transfer->quantity.' '.$transfer->product->unit.' '.$transfer->product->name.' dikirim dari '.$transfer->fromStore->name.' ke '.$transfer->toStore->name.'.',
+            route('stok', [], false),
+            $this->currentUser(),
+        );
 
         return redirect()->route('stok')->with('success', 'Transfer stok berhasil dibuat dan menunggu konfirmasi cabang tujuan.');
     }
@@ -220,6 +234,17 @@ class StockController extends Controller
                 'notes' => 'Konfirmasi penerimaan transfer stok',
             ]);
         });
+
+        $stockTransfer->load(['fromStore', 'toStore', 'product']);
+
+        app(ManagementNotificationService::class)->send(
+            [$stockTransfer->from_store_id, $stockTransfer->to_store_id],
+            'stock_transfer_confirmed',
+            'Pengiriman Stok Diterima',
+            $stockTransfer->quantity.' '.$stockTransfer->product->unit.' '.$stockTransfer->product->name.' dari '.$stockTransfer->fromStore->name.' telah diterima di '.$stockTransfer->toStore->name.'.',
+            route('stok', ['store_id' => $stockTransfer->to_store_id], false),
+            $this->currentUser(),
+        );
 
         return redirect()->route('stok')->with('success', 'Transfer stok berhasil dikonfirmasi.');
     }
