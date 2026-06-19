@@ -35,6 +35,8 @@ Route::middleware('auth')->group(function () {
         ->name('notifikasi.index');
     Route::post('/notifikasi/baca-semua', [NotificationController::class, 'readAll'])
         ->name('notifikasi.read-all');
+    Route::post('/notifikasi/{notification}/tandai-dibaca', [NotificationController::class, 'markAsRead'])
+        ->name('notifikasi.mark-as-read');
     Route::post('/notifikasi/{notification}/baca', [NotificationController::class, 'read'])
         ->name('notifikasi.read');
 

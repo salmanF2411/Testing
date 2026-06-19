@@ -36,6 +36,19 @@ class NotificationController extends Controller
         return redirect($target);
     }
 
+    public function markAsRead(string $notification): RedirectResponse
+    {
+        $notification = $this->currentUser()
+            ->notifications()
+            ->findOrFail($notification);
+
+        if ($notification->unread()) {
+            $notification->markAsRead();
+        }
+
+        return back()->with('success', 'Notifikasi telah ditandai sudah dibaca.');
+    }
+
     public function readAll(): RedirectResponse
     {
         $this->currentUser()->unreadNotifications()->update([

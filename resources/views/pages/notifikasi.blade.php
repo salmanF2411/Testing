@@ -35,9 +35,10 @@
                 default => ['fa-bell', 'bg-blue-100 text-blue-700'],
             };
         @endphp
-        <form method="POST" action="{{ route('notifikasi.read', $notification->id) }}" class="border-b border-slate-100 last:border-b-0">
-            @csrf
-            <button type="submit" class="w-full px-5 py-4 text-left hover:bg-slate-50 transition {{ $notification->unread() ? 'bg-blue-50/40' : 'bg-white' }}">
+        <div class="border-b border-slate-100 last:border-b-0 flex items-stretch transition hover:bg-slate-50 {{ $notification->unread() ? 'bg-blue-50/40' : 'bg-white' }}">
+            <form method="POST" action="{{ route('notifikasi.read', $notification->id) }}" class="min-w-0 flex-1">
+                @csrf
+                <button type="submit" class="w-full h-full px-5 py-4 text-left">
                 <div class="flex items-start gap-4">
                     <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 {{ $iconClass }}">
                         <i class="fa-solid {{ $icon }}"></i>
@@ -64,10 +65,28 @@
                             @endif
                         </div>
                     </div>
-                    <i class="fa-solid fa-chevron-right text-slate-300 mt-3"></i>
                 </div>
-            </button>
-        </form>
+                </button>
+            </form>
+
+            <div class="flex flex-col items-center sm:items-end justify-center gap-2 px-2 sm:px-5 py-4 border-l border-slate-100 min-w-14 sm:min-w-36">
+                @if($notification->unread())
+                    <form method="POST" action="{{ route('notifikasi.mark-as-read', $notification->id) }}">
+                        @csrf
+                        <button type="submit" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-blue-700 bg-blue-100 hover:bg-blue-200 transition whitespace-nowrap" title="Tandai notifikasi sudah dibaca">
+                            <i class="fa-solid fa-check"></i>
+                            <span class="hidden sm:inline">Tandai dibaca</span>
+                        </button>
+                    </form>
+                @else
+                    <span class="inline-flex items-center gap-2 text-xs font-medium text-slate-400 whitespace-nowrap">
+                        <i class="fa-solid fa-check-double"></i>
+                        <span class="hidden sm:inline">Sudah dibaca</span>
+                    </span>
+                @endif
+                <i class="fa-solid fa-chevron-right text-slate-300"></i>
+            </div>
+        </div>
     @empty
         <div class="px-6 py-16 text-center">
             <div class="w-14 h-14 rounded-lg bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
